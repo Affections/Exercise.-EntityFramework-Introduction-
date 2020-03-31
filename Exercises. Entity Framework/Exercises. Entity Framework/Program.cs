@@ -12,7 +12,7 @@ namespace Exercises._Entity_Framework
         {
            
              SoftUniContext context = new SoftUniContext();
-             string result = AddNewAddressToEmployee(context);
+             string result = GetAddressesByTown(context);
              Console.WriteLine(result);
 
         }
@@ -117,6 +117,29 @@ namespace Exercises._Entity_Framework
             }
             return sb.ToString().TrimEnd();
 
+        }
+
+        public static string GetAddressesByTown(SoftUniContext context)
+        {
+            StringBuilder sb = new StringBuilder();
+            var addresses = context.Addresses.GroupBy(a => new {
+                        a.AddressId,
+                        a.AddressText,
+                        a.Town.Name
+                    },
+                    (key, group) => new {
+                        AddressText = key.AddressText,
+                        Town = key.Name,
+                        Count = group.Sum(a => a.Employees.Count)
+                    }).OrderByDescending(x => x.Town).OrderBy(x => x.Town)
+                .ThenBy(x => x.AddressText).Take(10).ToList();
+            foreach (var a in addresses)
+            {
+                sb.AppendLine($"{a.AddressText}, {a.Town} - {a.Count} employees");
+                //sb.AppendLine(e.Projects.Select(p =>
+                //    $"--{p.Name} - {p.StartDate.ToString()} - {p.EndDate == null ? "not finished" : p.EndDate.ToString()}"));
+            }
+            return sb.ToString().TrimEnd();
         }
 
     }
