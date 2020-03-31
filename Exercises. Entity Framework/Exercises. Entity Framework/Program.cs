@@ -12,7 +12,7 @@ namespace Exercises._Entity_Framework
         {
            
              SoftUniContext context = new SoftUniContext();
-             string result = GetDepartmentsWithMoreThan5Employees(context);
+             string result = RemoveTown(context);
              Console.WriteLine(result);
 
         }
@@ -193,6 +193,100 @@ namespace Exercises._Entity_Framework
 
             return sb.ToString().TrimEnd();
 
+        }
+
+        public static string IncreaaseSalaries(SoftUniContext context)
+        {
+            StringBuilder sb = new StringBuilder();
+            var employees = context.Employees.Where(o =>
+                o.Department.Name == "Engineering" || o.Department.Name == "Tool Design" ||
+                o.Department.Name == "Marketing" || o.Department.Name == "Information Services").Select(o => new
+            {
+                FirstName = o.FirstName,
+                LastName = o.LastName,
+                Salary = o.Salary * 1.12m
+            }).OrderBy(o => o.FirstName).ThenBy(o => o.LastName);
+            foreach (var d in employees)
+            {
+                sb.AppendLine($"{d.FirstName} {d.LastName} (${d.Salary:f2})");
+           
+            }
+
+
+            return sb.ToString().TrimEnd();
+
+        }
+
+        public static string GetEmployeesByFirstNameStartingWithSa(SoftUniContext context)
+        {
+            StringBuilder sb = new StringBuilder();
+            var employees = context.Employees.Where(o => o.FirstName.StartsWith("Sa")).Select(o => new
+            {
+                FirstName = o.FirstName,
+                LastName = o.LastName,
+                JobTitle = o.JobTitle,
+                Salary = o.Salary
+            }).OrderBy(o => o.FirstName).ThenBy(o => o.LastName);
+            foreach (var d in employees)
+            {
+                sb.AppendLine($"{d.FirstName} {d.LastName} - {d.JobTitle} - (${d.Salary:f2})");
+
+            }
+
+
+            return sb.ToString().TrimEnd();
+        }
+
+        public static string DeleteProjectById(SoftUniContext context)
+
+        {
+            StringBuilder sb = new StringBuilder();
+            var project = context.Projects.Find(2);
+            context.Projects.Remove(project);
+            context.EmployeesProjects.ToList().ForEach(ep => context.EmployeesProjects.Remove(ep));
+            context.SaveChanges();
+            var projects = context.Projects.Take(10).Select(o => new
+            {
+                ProjectName = o.Name
+            });
+            foreach (var d in projects)
+            {
+                sb.AppendLine($"{d.ProjectName}");
+
+            }
+
+
+            return sb.ToString().TrimEnd();
+        }
+
+        public static string RemoveTown(SoftUniContext context)
+        {
+            StringBuilder sb = new StringBuilder();
+            string townName = Console.ReadLine();
+
+            context.Employees
+                .Where(e => e.Address.Town.Name == townName)
+                .ToList()
+                .ForEach(e => e.AddressId = null);
+
+            int addressesCount = context.Addresses
+                .Where(a => a.Town.Name == townName)
+                .Count();
+
+            context.Addresses
+                .Where(a => a.Town.Name == townName)
+                .ToList()
+                .ForEach(a => context.Addresses.Remove(a));
+
+            context.Towns
+                .Remove(context.Towns
+                    .SingleOrDefault(t => t.Name == townName));
+
+            context.SaveChanges();
+         
+
+            Console.WriteLine($"{addressesCount} {(addressesCount == 1 ? "address" : "addresses")} in {townName} {(addressesCount == 1 ? "was" : "were")} deleted");
+            return sb.ToString().TrimEnd();
         }
 
     }
